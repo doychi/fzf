@@ -4,6 +4,7 @@
 #
 #
 DESTDIR=/usr/local
+DESTCONF=/etc/fzf
 
 URL=https://github.com/junegunn/fzf-bin/releases/download/$(VERSION)/$(BINFILE).tgz
 
@@ -20,33 +21,55 @@ MANSRCFILE=$(MANSRC)/$(MANFILE)
 DESTFILE=$(DESTDIR)/bin/$(BINFILE)
 DESTLNK=$(DESTDIR)/bin/fzf
 
-install: bin/$(BINFILE)
-	echo Installing
+SHELLS=bash zsh fish
+PLUGINS=plugin
+
+install: bin/$(BINFILE) $(DESTCONF)
+	@echo Installing
 	cp bin/$(BINFILE) $(DESTFILE)
 	ln -s $(DESTDIR)/bin/$(BINFILE) $(DESTLNK)
 	mkdir -p $(MANDEST)
 	cp -r $(MANSRCFILE) $(MANDEST)
 	mandb
+	@echo "Configuraiton files for Vim, Bash, Zsh and Fish etc are in: "
+	@echo "	$(DESTCONF)"
+	@echo "This configuration is not linked to other configuraion files."
 
 bin/$(BINFILE):
-	echo Downloading Binary
+	@echo Downloading Binary
 	curl -fL $(URL) | tar -xz -C bin
 	touch bin/$(BINFILE)
 
+$(DESTCONF):
+	@echo Installing configuration
+	for SCRIPT in $(SHELLS); do \
+		mkdir -p $(DESTCONF)/$$SCRIPT ; \
+		echo $$SCRIPT ; \
+		cp shell/*.$$SCRIPT $(DESTCONF)/$$SCRIPT ; \
+	done
+	cp -r $(PLUGINS) $(DESTCONF)/$(PLUGINS)
+
 uninstall: FORCE
 	if [ -e $(DESTFILE) ] ; then \
+		echo "removing $(DESTFILE)" ; \
 		rm $(DESTFILE) ; \
 	fi
-	if [ -e $(DESTLNK) ] ; then \
+	if [ -L $(DESTLNK) ] ; then \
+		echo "removing $(DESTLNK)" ; \
 		rm $(DESTLNK) ; \
 	fi
+	# Remove the man page
 	if [ -e $(MANDESTFILE) ] ; then \
+		echo "removing $(MANDESTFILE)" ; \
 		rm $(MANDESTFILE) ; \
 	fi
-	if [ -e $(MANDEST)/* ] ; then \
-		rmdir $(MAKEDEST) ; \
-	fi
+	rmdir $(MANDEST)
 	mandb
+	# Remove the configuration
+	if [ -d $(DESTCONF) ] ; then \
+		echo "removing $(DESTCONF)" ; \
+		rm -fr $(DESTCONF) ; \
+	fi
 
 clean: FORCE
 	rm bin/$(BINFILE)
