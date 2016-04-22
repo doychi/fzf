@@ -21,7 +21,7 @@ MANSRCFILE=$(MANSRC)/$(MANFILE)
 DESTFILE=$(DESTDIR)/bin/$(BINFILE)
 DESTLNK=$(DESTDIR)/bin/fzf
 
-SHELLS=bash zsh fish
+SCRIPTS=shell
 PLUGINS=plugin
 
 install: bin/$(BINFILE) $(DESTCONF)
@@ -42,12 +42,11 @@ bin/$(BINFILE):
 
 $(DESTCONF):
 	@echo Installing configuration
-	for SCRIPT in $(SHELLS); do \
-		mkdir -p $(DESTCONF)/$$SCRIPT ; \
-		echo $$SCRIPT ; \
-		cp shell/*.$$SCRIPT $(DESTCONF)/$$SCRIPT ; \
-	done
-	cp -r $(PLUGINS) $(DESTCONF)/$(PLUGINS)
+	mkdir $(DESTCONF)
+	mkdir -p $(DESTCONF)/$(SCRIPTS)
+	mkdir -p $(DESTCONF)/$(PLUGINS)
+	cp $(SCRIPTS)/* $(DESTCONF)/$(SCRIPTS)
+	cp $(PLUGINS)/* $(DESTCONF)/$(PLUGINS)
 
 uninstall: FORCE
 	if [ -e $(DESTFILE) ] ; then \
